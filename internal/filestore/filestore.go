@@ -21,6 +21,7 @@ type Store struct {
 var (
 	_ repository.Creator = (*Store)(nil)
 	_ repository.Getter  = (*Store)(nil)
+	_ repository.Remover = (*Store)(nil)
 )
 
 func NewStore(filePath string) (*Store, error) {
@@ -61,7 +62,7 @@ func (f *Store) Store(value string, keys ...string) error {
 		return errors.New("at least one key is required")
 	}
 	compositeKey := strings.Join(keys, KeySeparator)
-	if f.viper.IsSet(compositeKey) {
+	if f.viper.IsSet(compositeKey) && f.viper.GetString(compositeKey) != "" {
 		return repository.ErrDuplicate
 	}
 	f.viper.Set(compositeKey, value)
@@ -84,9 +85,25 @@ func (f *Store) List(keys ...string) ([][]string, error) {
 	substring := strings.Join(keys, KeySeparator)
 	var results [][]string
 	for _, key := range f.viper.AllKeys() {
+		if f.viper.GetString(key) == "" {
+			continue
+		}
 		if strings.Contains(key, substring) {
 			results = append(results, []string{key, f.viper.GetString(key)})
 		}
 	}
 	return results, nil
+}
+
+func (f *Store) Delete(keys ...string) error {
+	if len(keys) == 0 {
+		return errors.New("at least one key is required")
+	}
+	compositeKey := strings.Join(keys, KeySeparator)
+	if !f.viper.IsSet(compositeKey) {
+		return repository.ErrNotFound
+	}
+	f.viper.Set(compositeKey, nil)
+	f.viper.Set(compositeKey, "")
+	return f.viper.WriteConfig()
 }

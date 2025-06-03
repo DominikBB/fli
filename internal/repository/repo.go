@@ -14,6 +14,10 @@ type (
 		Get(...string) (string, error)
 		List(...string) ([][]string, error)
 	}
+
+	Remover interface {
+		Delete(...string) error
+	}
 )
 
 var (
@@ -24,6 +28,7 @@ var (
 var (
 	_ Creator = (*MemoryStore)(nil)
 	_ Getter  = (*MemoryStore)(nil)
+	_ Remover = (*MemoryStore)(nil)
 )
 
 const KeySeparator = " "
@@ -71,4 +76,13 @@ func (m *MemoryStore) List(keys ...string) ([][]string, error) {
 		}
 	}
 	return results, nil
+}
+
+func (m *MemoryStore) Delete(keys ...string) error {
+	compositeKey := strings.Join(keys, KeySeparator)
+	if _, exists := m.data[compositeKey]; !exists {
+		return ErrNotFound
+	}
+	delete(m.data, compositeKey)
+	return nil
 }

@@ -13,6 +13,7 @@ import (
 type App struct {
 	Creator repository.Creator
 	Getter  repository.Getter
+	Remover repository.Remover
 }
 
 func NewApp() *App {
@@ -30,6 +31,7 @@ func NewApp() *App {
 	return &App{
 		Creator: fileStore,
 		Getter:  fileStore,
+		Remover: fileStore,
 	}
 }
 
